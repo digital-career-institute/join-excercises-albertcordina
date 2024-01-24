@@ -1,1 +1,72 @@
+-- Select all product names for suppliers from USA.
+SELECT product_name FROM products WHERE supplier_id IN (SELECT supplier_id FROM suppliers WHERE country = 'USA');
 
+-- Select order id, order date, employee first and last name for employee whose last name starts with 'D' and for order that was shipped to Germany.
+SELECT orders.order_id, orders.order_date, employees.first_name, employees.last_name
+FROM orders
+JOIN employees ON orders.employee_id = employees.employee_id
+WHERE employees.last_name LIKE 'D%' AND orders.ship_country = 'Germany';
+
+-- Select all orders shipped by United Package for orders sooner than '1996-08-12'
+SELECT*FROM orders WHERE shipped_date < '1996-08-12';
+
+-- Select shippers company name that doesn't have any orders assigned.
+SELECT s.company_name FROM orders o 
+RIGHT JOIN shippers s
+ON s.shipper_id = o.ship_via
+WHERE o.order_id IS null;
+
+-- Select order ids that contains product from category 'Beverages' ordered '1996-08-14'.
+SELECT DISTINCT (o.order_id) from orders o 
+LEFT JOIN order_details od 
+ON o.order_id = od.order_id 
+LEFT JOIN products p 
+ON od.product_id = p.product_id 
+LEFT JOIN categories c 
+ON p.category_id  = c.category_id 
+WHERE c.category_name = 'Beverages'
+AND order_date = '1996-08-14'
+
+-- Select product names and availability of products supplied by 'Lyngbysild' from category 'Seafood'.
+SELECT p.product_name FROM products p 
+LEFT JOIN suppliers s 
+ON p.supplier_id = s.supplier_id 
+LEFT JOIN categories c 
+ON p.category_id  = c.category_id 
+WHERE s.company_name = 'Lyngbysild'
+AND c.category_name = 'Seafood';
+
+-- Select last names of employees assigned to 'Northern' region.
+SELECT e.last_name FROM employees e 
+LEFT JOIN employee_territories et 
+ON e.employee_id = et.employee_id 
+LEFT JOIN territories t 
+ON t.territory_id  = et.territory_id 
+LEFT JOIN region r 
+ON r.region_id = t.region_id 
+WHERE r.region_description = 'Northern'
+
+-- Select employee id and his boss last name for those who have orders with date later than '1996-07-18'. if an employee doesn't have a boss don't include him.
+SELECT DISTINCT (e.employee_id), e.first_name, e.last_name , e2.last_name 
+AS boss_last_name 
+FROM employees e 
+RIGHT JOIN employees e2 
+ON e.reports_to = e2.employee_id
+LEFT JOIN orders o 
+ON o.employee_id = e.employee_id 
+WHERE o.order_date > '1996-07-18'
+ORDER BY e.employee_id;
+
+-- List the employees in the warehouse with orders that are not shipped yet.
+SELECT DISTINCT e.employee_id, e.first_name, e.last_name, o.* FROM employees e 
+LEFT JOIN orders o 
+ON e.employee_id  = o.employee_id 
+WHERE o.shipped_date IS null;
+
+-- Calculate the price for each product with its name in each order after discount is applied.
+  SELECT DISTINCT od.*,
+    p.product_name, 
+    od.unit_price * od.quantity * (1 - od.discount) AS price_after_discount
+FROM products p 
+LEFT JOIN order_details od 
+ON p.product_id = od.product_id;
